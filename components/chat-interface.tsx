@@ -150,7 +150,7 @@ export function ChatInterface({ history }: {
     onSubmit(values) {
 
       formik.setSubmitting(false)
-      /startTransition(() => {
+      startTransition(() => {
         addOptimisticMessage({
           // id: (optimisticMessages[1] as any).length + 1,
           // query: formik.values.query,
