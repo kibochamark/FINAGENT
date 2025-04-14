@@ -148,15 +148,15 @@ export function ChatInterface({ history }: {
       query: Yup.string().required("Query is required")
     }),
     onSubmit(values) {
-
+      const newMessageId = (optimisticMessages[1]?.history?.length || 0) + 1;
       formik.setSubmitting(false)
       startTransition(() => {
         addOptimisticMessage({
-          // id: (optimisticMessages[1] as any).length + 1,
-          // query: formik.values.query,
-          // response: "",
-          // created_at: new Date(),
-          // updated_at: new Date(),
+          id:newMessageId,
+          query: formik.values.query,
+          response: "",
+          created_at: new Date(),
+          updated_at: new Date(),
         });
       });
       
