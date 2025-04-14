@@ -5,7 +5,7 @@ import { ChatInterface } from "@/components/chat-interface"
 import { gethistory } from "@/actions/queryagent"
 
 export default async function Home() {
-  const history = await gethistory() ?? []
+  const history  = await gethistory() ?? []
   return (
     <main className="flex flex-col min-h-screen bg-gray-50">
       <header className="border-b bg-white p-4">
@@ -29,10 +29,11 @@ export default async function Home() {
 
         {/* Desktop layout */}
         <div className="hidden md:flex flex-1 gap-6">
-          {/* <div className="w-2/5">
+          <div className="w-2/5">
             <h2 className="text-xl font-semibold mb-4">Data Ingestion</h2>
-            <DataIngestion />
-          </div> */}
+            {/* <DataIngestion /> */}
+            coming soon!
+          </div>
           <div className="w-3/5">
             <h2 className="text-xl font-semibold mb-4">Chat Interface</h2>
             <ChatInterface history={history}/>
