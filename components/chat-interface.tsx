@@ -150,15 +150,15 @@ export function ChatInterface({ history }: {
     onSubmit(values) {
 
       formik.setSubmitting(false)
-      // startTransition(() => {
-      //   addOptimisticMessage({
-      //     id: (optimisticMessages[1] as any).length + 1,
-      //     query: formik.values.query,
-      //     response: "",
-      //     created_at: new Date(),
-      //     updated_at: new Date(),
-      //   });
-      // });
+      /startTransition(() => {
+        addOptimisticMessage({
+          // id: (optimisticMessages[1] as any).length + 1,
+          // query: formik.values.query,
+          // response: "",
+          // created_at: new Date(),
+          // updated_at: new Date(),
+        });
+      });
       
       querymutation.mutateAsync(values.query)
 
