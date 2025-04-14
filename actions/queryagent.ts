@@ -8,7 +8,7 @@ export const queryagent = async (query: string) => {
         if (query == '') {
             throw new Error("query should not be empty")
         }
-        const res = await axios.post("http://localhost:8000/api/v1/ask", {
+        const res = await axios.post("https://finagent-api.onrender.com/api/v1/ask", {
             query
         })
         revalidateTag('gethistory')
@@ -24,7 +24,7 @@ export const queryagent = async (query: string) => {
 
 export const gethistory = async () => {
     try {
-        const res = await fetch("http://localhost:8000/api/v1/history", {
+        const res = await fetch("https://finagent-api.onrender.com/api/v1/history", {
             method: "GET",
             next: {
                 tags: ['gethistory']
