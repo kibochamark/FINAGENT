@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, Fragment, useOptimistic, startTransition } from "react"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,26 +11,69 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Separator } from "@/components/ui/separator"
 import { useMobile } from "@/hooks/use-mobile"
-import {useFormik}  from 'formik'
+import { useFormik } from 'formik'
 import { useMutation } from "@tanstack/react-query"
 import * as Yup from 'yup'
 import { queryagent } from "@/actions/queryagent"
 
 // Define message types
+type ChatMessage = {
+  id: number;
+  query: string;
+  response: string;
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type ChatStatus = {
+  status: number;
+  history: ChatMessage[];
+};
 
 
-export function ChatInterface({history}:{
-  history:{
-    status:number,
-    history:{
-      query:string;
-      response:string;
-      created_at:Date;
-      updated_at:Date;
-    }[]
-  }[]
+export function ChatInterface({ history }: {
+  history: ChatStatus[]
 }) {
   const isMobile = useMobile()
+
+
+  // const [optimisticMessages, setOptimisticMessages] = useOptimistic(
+  //   history,
+  //   (prev) => {
+  //     return [
+  //       ...prev,
+  //       {
+  //         status: 200,
+  //         history: [
+  //           {
+  //             id:prev.length + 1,
+  //             query: formik.values.query,
+  //             response: "",
+  //             created_at: new Date(),
+  //             updated_at: new Date()
+  //           }
+  //         ]
+  //       }
+  //     ]
+  //   }
+  // );
+
+  const [optimisticMessages, addOptimisticMessage] = useOptimistic<ChatStatus[], ChatMessage>(
+    history,
+    (prevState, newMessage) => {
+      console.log(newMessage, "ne")
+      const newEntry: ChatStatus = {
+        status: 200,
+        history: [newMessage],
+      };
+
+      return [...prevState, newEntry];
+    }
+  );
+
+
+  // console.log(optimisticMessages, "messages")
+
 
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -83,32 +126,42 @@ export function ChatInterface({history}:{
   //   end of editor
 
   const querymutation = useMutation({
-    mutationFn:async(query:string)=>{
+    mutationFn: async (query: string) => {
       const res = await queryagent(query)
       return res
     },
     onSuccess(data) {
       console.log(JSON.stringify(data));
-      
+
     },
     onError(error) {
       console.log(JSON.stringify(error));
     },
   })
 
-  const formik =useFormik({
-    initialValues:{
-      query:''
+
+  const formik = useFormik({
+    initialValues: {
+      query: ''
     },
-    validationSchema:Yup.object().shape({
-      query:Yup.string().required("Query is required")
+    validationSchema: Yup.object().shape({
+      query: Yup.string().required("Query is required")
     }),
     onSubmit(values) {
-      
-      formik.setSubmitting(false)
 
-      querymutation.mutateAsync(values.query)
+      formik.setSubmitting(false)
+      startTransition(() => {
+        addOptimisticMessage({
+          id: (optimisticMessages[1] as any).length + 1,
+          query: formik.values.query,
+          response: "",
+          created_at: new Date(),
+          updated_at: new Date(),
+        });
+      });
       
+      querymutation.mutateAsync(values.query)
+
     },
   })
 
@@ -130,45 +183,47 @@ export function ChatInterface({history}:{
               </div>
             </div>
           </div>
-          {history && Array.isArray(history[1]) && history[1].map((result:{
-            query:string;
-            response:string;
-            created_at:Date;
-            updated_at:Date;
-          }, idx:number) => (
-            <>
-            {/* query  */}
-                 <div key={idx} className={`flex justify-end`}>
-              <div
-                className={`max-w-[80%] rounded-lg p-3 bg-purple-700 text-white`}
-                
-              >
-                {result.query}
+          {optimisticMessages && Array.isArray(optimisticMessages[1]) && optimisticMessages[1].map((result: {
+
+            id: number;
+            query: string;
+            response: string;
+            created_at: Date;
+            updated_at: Date;
+          }, idx: number) => (
+            <Fragment key={result.id}>
+              {/* query  */}
+              <div className={`flex justify-end`}>
                 <div
-                  className={`text-xs mt-1 text-black`}
+                  className={`max-w-[80%] rounded-lg p-3 bg-purple-700 text-white`}
+
                 >
-                  {new Date(result.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  {result.query}
+                  <div
+                    className={`text-xs mt-1 text-black`}
+                  >
+                    {new Date(result.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* response from agent */}
+              {/* response from agent */}
 
-            <div key={idx} className={`flex justify-start`}>
-              <div
-                className={`max-w-[80%] rounded-lg p-3 bg-gray-200 text-black`}
-                
-              >
-                {result.response}
+              <div key={idx} className={`flex justify-start`}>
                 <div
-                  className={`text-xs mt-1 text-black`}
+                  className={`max-w-[80%] rounded-lg p-3 bg-gray-200 text-black`}
+
                 >
-                  {new Date(result.updated_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  {result.response}
+                  <div
+                    className={`text-xs mt-1 text-black`}
+                  >
+                    {new Date(result.updated_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  </div>
                 </div>
               </div>
-            </div>
-            </>
-       
+            </Fragment>
+
           ))}
           {querymutation.isPending && (
             <div className="flex justify-start">
@@ -345,7 +400,7 @@ export function ChatInterface({history}:{
               />
               <Button
                 type="submit"
-disabled={formik.isSubmitting || querymutation.isPending}
+                disabled={formik.isSubmitting || querymutation.isPending}
                 size={isMobile ? "icon" : "default"}
                 className="disabled:bg-gray-600"
               >
